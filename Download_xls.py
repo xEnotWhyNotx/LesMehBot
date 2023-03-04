@@ -6,6 +6,10 @@ url = 'https://lesmeh.edu35.ru/59-raspisanie-zanyatij'
 # Путь для сохранения файла. В папку загрузки
 directory = "Admin\Downloads"
 
+fds = sorted(os.listdir('Admin/Downloads/'))
+for file in fds:
+    os.remove('Admin/Downloads/'+file)
+
 if not os.path.exists(directory):
     os.makedirs(directory)
 

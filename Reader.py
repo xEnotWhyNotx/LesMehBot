@@ -41,27 +41,37 @@ for filename in os.listdir(directory):
             if type(arr_A[j]) == NoneType:
                 index_to_remove.append(j)
 
-
         arr_A = np.delete(arr_A, index_to_remove)
         arr_indexes_A = np.delete(arr_indexes_A, index_to_remove)
 
-
-        #Очистим массивы индексов и данных из ячеек от мусора
-        arrays_n = []
+        # Очистим массивы индексов и данных из ячеек от мусора
         next_clean_arr = []
         for i in range(len(arr_A)):
             nums = '123456'
             if arr_A[i] not in nums:
                 next_clean_arr.append(i)
-                # if int(arr_A[i]) > int(arr_A[i-1]):
-                #     arrays_n.append(arr_A[i])
-                # else:
-                #     break
         arr_A = np.delete(arr_A, next_clean_arr)
         arr_indexes_A = np.delete(arr_indexes_A, next_clean_arr)
 
-        #Функция создания массивов индексов и данных из ячеек
-        
+        # Функция создания массивов индексов и данных из ячеек
+        arr_test = arr_A
+        arr_test_ind = arr_indexes_A
+
+        result_arr = []
+        result_arr_ind = []
+        temp = [arr_test[0]]
+        temp_ind = [arr_test_ind[0]]
+
+        for i in range(1, len(arr_test)):
+            if arr_test[i] < arr_test[i - 1]:
+                result_arr.append(temp)
+                result_arr_ind.append(temp_ind)
+                temp = []
+                temp_ind = []
+            temp.append(arr_test[i])
+            temp_ind.append(arr_test_ind[i])
+        result_arr.append(temp)
+        result_arr_ind.append(temp_ind)
 
         while column_min <= column_max:
             row_min_min = row_min
@@ -79,14 +89,15 @@ for filename in os.listdir(directory):
                 # print(data_from_cell)
                 regular = search_text
                 result = re.findall(regular, data_from_cell)
+
                 if len(result) > 0:
                     print('Нашли в ячейке: ', word_cell)
                     data_from_cell_next = ws[word_cell_next].value
                     print(data_from_cell_next)
                     print(arr_A)
                     print(arr_indexes_A)
-                    print(arrays_n)
-                    print(next_clean_arr)
+                    print(result_arr)
+                    print(result_arr_ind)
 
                 row_min_min = int(row_min_min)
                 row_min_min += 1
