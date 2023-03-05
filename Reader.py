@@ -28,9 +28,12 @@ for filename in os.listdir(directory):
 
         arr_A = []
         arr_indexes_A = []
+        arr_indexes_without_A = []
         for i in range(row_max + 1):
             word_cell_A = 'A' + str(int(i))
+            word_cell_without_A = str(int(i))
             arr_indexes_A.append(word_cell_A)
+            arr_indexes_without_A.append(word_cell_without_A)
             # print(word_cell_A)
             data_from_cell_A = ws[word_cell_A].value
             arr_A.append(data_from_cell_A)
@@ -43,6 +46,7 @@ for filename in os.listdir(directory):
 
         arr_A = np.delete(arr_A, index_to_remove)
         arr_indexes_A = np.delete(arr_indexes_A, index_to_remove)
+        arr_indexes_without_A = np.delete(arr_indexes_without_A, index_to_remove)
 
         # Очистим массивы индексов и данных из ячеек от мусора
         next_clean_arr = []
@@ -52,26 +56,35 @@ for filename in os.listdir(directory):
                 next_clean_arr.append(i)
         arr_A = np.delete(arr_A, next_clean_arr)
         arr_indexes_A = np.delete(arr_indexes_A, next_clean_arr)
+        arr_indexes_without_A = np.delete(arr_indexes_without_A, next_clean_arr)
 
         # Функция создания массивов индексов и данных из ячеек
         arr_test = arr_A
         arr_test_ind = arr_indexes_A
+        arr_test_ind_without_A = arr_indexes_without_A
 
         result_arr = []
         result_arr_ind = []
+        result_arr_ind_without_A = []
+
         temp = [arr_test[0]]
         temp_ind = [arr_test_ind[0]]
+        temp_ind_without_A = [arr_test_ind_without_A[0]]
 
         for i in range(1, len(arr_test)):
             if arr_test[i] < arr_test[i - 1]:
                 result_arr.append(temp)
                 result_arr_ind.append(temp_ind)
+                result_arr_ind_without_A.append(temp_ind_without_A)
                 temp = []
                 temp_ind = []
+                temp_ind_without_A = []
             temp.append(arr_test[i])
             temp_ind.append(arr_test_ind[i])
+            temp_ind_without_A.append(arr_test_ind_without_A[i])
         result_arr.append(temp)
         result_arr_ind.append(temp_ind)
+        result_arr_ind_without_A.append(temp_ind_without_A)
 
         while column_min <= column_max:
             row_min_min = row_min
@@ -98,6 +111,7 @@ for filename in os.listdir(directory):
                     print(arr_indexes_A)
                     print(result_arr)
                     print(result_arr_ind)
+                    print(result_arr_ind_without_A)
 
                 row_min_min = int(row_min_min)
                 row_min_min += 1
