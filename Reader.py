@@ -1,11 +1,10 @@
 import os
 import re
 import numpy as np
-
 import openpyxl as ox
 from openpyxl.utils import get_column_letter
-import pyexcel as p
 
+# import pyexcel as p
 # from openpyxl import load_workbook
 
 
@@ -21,8 +20,6 @@ for filename in os.listdir(directory):
         row_max = ws.max_row
         column_max = ws.max_column
         print('In file: ', filename, '\n Columns:', column_max, '\n Rows: ', row_max)
-        # s66_value = ws['S66'].value
-        # print(f'{filename}: {s66_value}')
         row_min = 1
         column_min = 1
 
@@ -95,7 +92,16 @@ for filename in os.listdir(directory):
                 word_column = get_column_letter(column_min)
                 word_column = str(word_column)
                 word_cell = word_column + row_min_min
-                word_cell_next = word_column + str(int(row_min_min) + 1)
+
+                data_from_lesson = {}
+                data_from_teacher = {}
+                for i in range(1, 7):
+                    lesson_cell = word_column + str(int(row_min_min) + 2 * i - 1)
+                    print(lesson_cell)
+                    teacher_cell = word_column + str(int(row_min_min) + 2 * i)
+                    print(teacher_cell)
+                    data_from_lesson[f"data_from_lesson_{i}"] = ws[lesson_cell].value
+                    data_from_teacher[f"data_from_teacher_{i}"] = ws[teacher_cell].value
 
                 data_from_cell = ws[word_cell].value
                 data_from_cell = str(data_from_cell)
@@ -105,13 +111,15 @@ for filename in os.listdir(directory):
 
                 if len(result) > 0:
                     print('Нашли в ячейке: ', word_cell)
-                    data_from_cell_next = ws[word_cell_next].value
-                    print(data_from_cell_next)
-                    #print(arr_A)
-                    #print(arr_indexes_A)
+                    # data_from_cell_next = ws[word_cell_next].value
+                    # print(data_from_cell_next)
+                    # print(arr_A)
+                    # print(arr_indexes_A)
                     print(result_arr)
                     print(result_arr_ind)
                     print(result_arr_ind_without_A)
+                    print(data_from_lesson)
+                    print(data_from_teacher)
 
                 row_min_min = int(row_min_min)
                 row_min_min += 1

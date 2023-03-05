@@ -8,8 +8,10 @@ url = 'https://lesmeh.edu35.ru/59-raspisanie-zanyatij'
 directory = "Admin\Downloads"
 
 fds = sorted(os.listdir('Admin/Downloads/'))
-for file in fds:
-    os.remove('Admin/Downloads/'+file)
+response = requests.get(url)
+if response.status_code == (200 or 0):
+    for file in fds:
+        os.remove('Admin/Downloads/' + file)
 
 if not os.path.exists(directory):
     os.makedirs(directory)
