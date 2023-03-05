@@ -31,7 +31,7 @@ for filename in os.listdir(directory):
         arr_indexes_without_A = []
         for i in range(row_max + 1):
             word_cell_A = 'A' + str(int(i))
-            word_cell_without_A = str(int(i))
+            word_cell_without_A = int(i)
             arr_indexes_A.append(word_cell_A)
             arr_indexes_without_A.append(word_cell_without_A)
             # print(word_cell_A)
@@ -107,8 +107,8 @@ for filename in os.listdir(directory):
                     print('Нашли в ячейке: ', word_cell)
                     data_from_cell_next = ws[word_cell_next].value
                     print(data_from_cell_next)
-                    print(arr_A)
-                    print(arr_indexes_A)
+                    #print(arr_A)
+                    #print(arr_indexes_A)
                     print(result_arr)
                     print(result_arr_ind)
                     print(result_arr_ind_without_A)
