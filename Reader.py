@@ -97,9 +97,9 @@ for filename in os.listdir(directory):
                 data_from_teacher = {}
                 for i in range(1, 7):
                     lesson_cell = word_column + str(int(row_min_min) + 2 * i - 1)
-                    print(lesson_cell)
+                    #print(lesson_cell)
                     teacher_cell = word_column + str(int(row_min_min) + 2 * i)
-                    print(teacher_cell)
+                    #print(teacher_cell)
                     data_from_lesson[f"data_from_lesson_{i}"] = ws[lesson_cell].value
                     data_from_teacher[f"data_from_teacher_{i}"] = ws[teacher_cell].value
 
