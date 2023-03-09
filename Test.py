@@ -114,12 +114,25 @@ for file in txt_files:
                 # print(key)
 
                 # ищем значения в ячейках ниже на одну или две от известной ячейки
-                for row_offset in range(1, 3):
-                    for col_offset in range(-1, 2):
-                        # пропускаем текущую ячейку
-                        if row_offset == 0 and col_offset == 0:
-                            continue
-                        # получаем значение ячейки
-                        cell_value = ws.cell(row=row_group + row_offset, column=alphabet.find(column_group) + col_offset).value
-                        #if cell_value:
-                            #print(cell_value)
+                # i - индекс количества подмассивов в массиве
+                # j - столбецв таблице
+                data_from_data_rows = {}
+                for i in range(len(result_arr_ind_without_A)):
+                    if row_group in result_arr_ind_without_A[i]:
+                        data_from_rows = []
+                        #print(row_group, result_arr_ind_without_A[i])
+                        for row in range(row_group, max(result_arr_ind_without_A[i]) + 1):
+                            data_from_rows.append(ws.cell(row=row, column=alphabet.find(column_group) + 1).value)
+                        # print(data_from_rows)
+                        data_from_data_rows[key] = data_from_rows
+                print(data_from_data_rows)
+
+                # for row_offset in range(1, 3):
+                #     for col_offset in range(-1, 2):
+                #         # пропускаем текущую ячейку
+                #         if row_offset == 0 and col_offset == 0:
+                #             continue
+                #         # получаем значение ячейки
+                #         cell_value = ws.cell(row=row_group + row_offset, column=alphabet.find(column_group) + col_offset).value
+                #         #if cell_value:
+                #             #print(cell_value)
