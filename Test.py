@@ -7,6 +7,11 @@ data_dir = 'Admin/Downloads'
 txt_files = [f for f in os.listdir(data_dir) if f.endswith('.txt')]
 xlsx_files = [v for v in os.listdir(data_dir) if v.endswith('.xlsx')]
 alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+dest_dir = 'Admin/Destination'
+fds = sorted(os.listdir('Admin/Destination/'))
+for file in fds:
+    if file.endswith('.txt'):
+        os.remove(dest_dir + '/' + file)
 
 for file in txt_files:
     data = {}
@@ -102,7 +107,7 @@ for file in txt_files:
             # print(arr_indexes_without_A)
             # print(result_arr)
             # print(result_arr_ind)
-            print(result_arr_ind_without_A)
+            #print(result_arr_ind_without_A)
             #print(result_arr_ind_without_A_for_use)
 
 ########################################################################################################################
@@ -132,5 +137,11 @@ for file in txt_files:
                                 data_from_rows.append(ws.cell(row=row, column=alphabet.find(column_group) + 1).value)
                         # print(data_from_rows)
                         data_from_data_rows[key] = data_from_rows
-                print(data_from_data_rows)
+                #print(data_from_data_rows)
+
+                # Создаем текстовый файл с названием текущего xlsx файла
+                with open(os.path.join(dest_dir, os.path.splitext(file)[0] + '_' + f'{key}' + '.txt'), 'w') as f:
+                    for group, data in data_from_data_rows.items():
+                        f.write(f"{group}: {data}\n")
+
                 #print(result_arr_ind_without_A_for_use)
