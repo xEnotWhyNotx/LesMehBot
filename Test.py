@@ -1,6 +1,6 @@
 import os
 import openpyxl as ox
-from openpyxl import load_workbook
+import numpy as np
 
 
 data_dir = 'Admin/Downloads'
@@ -31,6 +31,80 @@ for file in txt_files:
             row_min = 1
             column_min = 1
 
+########################################################################################################################
+
+            arr_A = []
+            arr_indexes_A = []
+            arr_indexes_without_A = []
+            for i in range(row_max + 1):
+                word_cell_A = 'A' + str(int(i))
+                word_cell_without_A = int(i)
+                arr_indexes_A.append(word_cell_A)
+                arr_indexes_without_A.append(word_cell_without_A)
+                # print(word_cell_A)
+                data_from_cell_A = ws[word_cell_A].value
+                arr_A.append(data_from_cell_A)
+
+            NoneType = type(None)
+            index_to_remove = []
+            for j in range(len(arr_A)):
+                if type(arr_A[j]) == NoneType:
+                    index_to_remove.append(j)
+
+            arr_A = np.delete(arr_A, index_to_remove)
+            arr_indexes_A = np.delete(arr_indexes_A, index_to_remove)
+            arr_indexes_without_A = np.delete(arr_indexes_without_A, index_to_remove)
+
+            # Очистим массивы индексов и данных из ячеек от мусора
+            next_clean_arr = []
+            for i in range(len(arr_A)):
+                nums = '123456'
+                if arr_A[i] not in nums:
+                    next_clean_arr.append(i)
+            arr_A = np.delete(arr_A, next_clean_arr)
+            arr_indexes_A = np.delete(arr_indexes_A, next_clean_arr)
+            arr_indexes_without_A = np.delete(arr_indexes_without_A, next_clean_arr)
+            # Функция создания массивов индексов и данных из ячеек
+            arr_test = arr_A
+            arr_test_ind = arr_indexes_A
+            arr_test_ind_without_A = arr_indexes_without_A
+
+            result_arr = []
+            result_arr_ind = []
+            result_arr_ind_without_A = []
+
+            temp = [arr_test[0]]
+            temp_ind = [arr_test_ind[0]]
+            temp_ind_without_A = [arr_test_ind_without_A[0]]
+
+            for i in range(1, len(arr_test)):
+                if arr_test[i] < arr_test[i - 1]:
+                    result_arr.append(temp)
+                    result_arr_ind.append(temp_ind)
+                    result_arr_ind_without_A.append(temp_ind_without_A)
+                    temp = []
+                    temp_ind = []
+                    temp_ind_without_A = []
+                temp.append(arr_test[i])
+                temp_ind.append(arr_test_ind[i])
+                temp_ind_without_A.append(arr_test_ind_without_A[i])
+            result_arr.append(temp)
+            result_arr_ind.append(temp_ind)
+            result_arr_ind_without_A.append(temp_ind_without_A)
+
+            for i in range(len(result_arr_ind_without_A)):
+                result_arr_ind_without_A[i] = list(range(result_arr_ind_without_A[i][0] - 1, result_arr_ind_without_A[i][-1] + 1))
+                result_arr_ind_without_A[i].append(result_arr_ind_without_A[i][-1] + 1)
+
+            # print(arr_A)
+            # print(arr_indexes_A)
+            # print(arr_indexes_without_A)
+            # print(result_arr)
+            print(result_arr_ind)
+            print(result_arr_ind_without_A)
+
+########################################################################################################################
+
             data_items = data.items()
             for key, value in data_items:
                 cell_group = value
@@ -47,5 +121,5 @@ for file in txt_files:
                             continue
                         # получаем значение ячейки
                         cell_value = ws.cell(row=row_group + row_offset, column=alphabet.find(column_group) + col_offset).value
-                        if cell_value:
-                            print(cell_value)
+                        #if cell_value:
+                            #print(cell_value)
