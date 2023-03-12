@@ -6,7 +6,7 @@ from datetime import datetime, date, timedelta
 
 def get_filtered_files(group_name, subgroup):
     directory = 'Admin/Destination'
-    today = date.today()
+    today = date.today() - timedelta(days=4)
     filtered_files = []
     for file_name in os.listdir(directory):
         if group_name in file_name and '__{}__'.format(subgroup) in file_name:
@@ -39,15 +39,22 @@ def find_files_by_subgroup(group_name, subgroup):
     files = glob.glob(directory + pattern)
     return files
 
+def find_date_from_name_file(files):
+    for file in files:
+        date_start = file.find(" на ") + 4
+        date_end = file.find(".2023")
+        date_str = file[date_start:date_end]
+        return date_str
+
 
 def reading(group_name, subgroup):
+
     files = get_filtered_files(group_name, subgroup)
-    if len(files) > 0:
-        print("Найденные файлы:")
-        for file_path in files:
-            print(file_path)
-    else:
-        print("Файлы не найдены")
+    for file in files:
+        date_start = file.find(" на ") + 4
+        date_end = file.find(".2023")
+        date_str = file[date_start:date_end]
+        print(date_str)
 
     data_dir = 'Admin/Destination/'
     file = files
@@ -58,12 +65,12 @@ def reading(group_name, subgroup):
 
     lines = content.split('\n')
 
-    group_name = lines[0].split(":")[0]
-    subject_teacher_names = lines[0].split(":")[1].split(",")
+    group_name = lines[0].split(";")[0]
+    subject_teacher_names = lines[0].split(";")[1].split(",")
     subject_names = subject_teacher_names[::2]
     teacher_names = subject_teacher_names[1::2]
 
-    classroom_numbers = lines[1].split(":")[1].split(",")
+    classroom_numbers = lines[1].split(";")[1].split(",")
     classroom_numbers = [num.strip() for num in classroom_numbers]
 
     output = f"Расписание группы {group_name}\n"
