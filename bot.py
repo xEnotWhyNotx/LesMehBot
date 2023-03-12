@@ -1,9 +1,13 @@
+import logging
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import CallbackQuery
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils import executor
 from INFO import BOT_TOKEN
-from txt_reader import reading
+from txt_reader import reading, find_date_from_name_file
 
+logging.basicConfig(level=logging.INFO)
+
+# Создаем экземпляр бота и диспетчер
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 
@@ -31,8 +35,10 @@ groups1 = ['АМ-31', 'АМ-33', 'АМ-32', 'АМ-34', 'АМ-41', 'АМ-42', 'А
            'ЮР-35', 'ЮР-36']
 
 subgroups = ['1', '2']
+user_data = {}
 
-days = ['today', 'next_day']
+
+# global dates
 
 def split_groups(group):
     split_groups = []
@@ -51,11 +57,8 @@ def search_in_splitted_groups(group_num):
         if group_num in groups_splitted:
             return group
 
-# Словарь для хранения выбранных пользователем групп и подгрупп
-user_data = {}
 
-
-# Обработчик команды /start
+# Обработчик команды /start или текстового сообщения с названием группы
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
     # Отправляем сообщение с приветствием и инструкцией
@@ -69,48 +72,72 @@ async def process_group_command(message: types.Message):
     # Запоминаем выбранную группу
     user_data['group'] = search_in_splitted_groups(message.text.upper())
 
-    # Отправляем сообщение с выбором подгруппы
-    keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(
-        types.InlineKeyboardButton(text="Подгруппа 1", callback_data="1"),
-        types.InlineKeyboardButton(text="Подгруппа 2", callback_data="2")
-    )
-    await message.reply("Выберите подгруппу:", reply_markup=keyboard)
-    # await message.delete()
+    # Создаем клавиатуру с кнопками подгрупп
+    keyboard = InlineKeyboardMarkup()
+    for subgroup in subgroups:
+        keyboard.add(InlineKeyboardButton(subgroup, callback_data=subgroup))
+
+    # Отправляем сообщение с клавиатурой
+    await message.reply("Выбери подгруппу", reply_markup=keyboard)
 
 
-# Обработчик нажатия на инлайн-кнопки
+# Обработчик нажатия на кнопку подгруппы
 @dp.callback_query_handler(lambda c: c.data in subgroups)
-async def process_callback_button(callback_query: CallbackQuery):
+async def subgroup_callback_handler(callback_query: types.CallbackQuery):
     # Получаем выбранную подгруппу
     subgroup = callback_query.data
-
-    # Запоминаем выбранную подгруппу
     user_data['subgroup'] = subgroup
-    # Отправляем сообщение с выбором подгруппы
-    keyboard = types.InlineKeyboardMarkup()
-    for day in days:
-        keyboard.add(
-                types.InlineKeyboardButton(text=day, callback_data=day)
-        )
-    await bot.send_message(callback_query.from_user.id,"Выберите дату:", reply_markup=keyboard)
 
-@dp.callback_query_handler(lambda c: c.data in days)
-async def process_callback_button(callback_query: CallbackQuery):
-    # Получаем выбранный день
-    day = callback_query.data
+    # Создаем клавиатуру с кнопками дат
+    keyboard = InlineKeyboardMarkup()
+    dates = find_date_from_name_file(user_data['group'], user_data['subgroup'])
+    for date in dates:
+        keyboard.add(InlineKeyboardButton(date, callback_data=date))
 
-    # Запоминаем выбранный день
-    user_data['day'] = day
+    # Отправляем сообщение с клавиатурой
+    await bot.send_message(callback_query.from_user.id, f"Вы выбрали {subgroup}. Выберите дату:", reply_markup=keyboard)
 
-    # Отвечаем пользователю
-    await bot.send_message(
-        callback_query.from_user.id,
-        f"Вы выбрали группу {user_data['group']} и подгруппу {user_data['subgroup']} и день {user_data['day']}."
-    )
+    # Отвечаем на callback_query, чтобы скрыть у пользователя кнопки с подгруппами
+    await callback_query.answer()
 
-    # Закрываем инлайн-клавиатуру после нажатия на кнопку
-    await bot.answer_callback_query(callback_query.id)
+
+# Обработчик нажатия на кнопку даты
+@dp.callback_query_handler(lambda c: c.data in find_date_from_name_file(user_data['group'], user_data['subgroup']))
+async def date_callback_handler(callback_query: types.CallbackQuery):
+    # Получаем выбранную дату
+    date = callback_query.data
+    user_data['date'] = date
+
+    # Создаем клавиатуру с кнопкой "назад"
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton("Назад", callback_data="back"))
+
+    # Отправляем сообщение с клавиатурой
+    await bot.send_message(callback_query.from_user.id,
+                           f"Выбрана подгруппа {user_data['subgroup']} группы {user_data['group']}", reply_markup=keyboard)
+
+    # Отвечаем на callback_query, чтобы скрыть у пользователя кнопки с датами
+    await callback_query.answer()
+
+    # Вызываем функцию reading() и отправляем результат пользователю
+    result = reading(user_data['group'], user_data['subgroup'], user_data['date'])
+    await bot.send_message(callback_query.from_user.id, result)
+
+
+# Обработчик нажатия на кнопку "назад"
+@dp.callback_query_handler(lambda c: c.data == "back")
+async def back_callback_handler(callback_query: types.CallbackQuery):
+    # Создаем клавиатуру с кнопками дат
+    keyboard = InlineKeyboardMarkup()
+    dates = find_date_from_name_file(user_data['group'], user_data['subgroup'])
+    for date in dates:
+        keyboard.add(InlineKeyboardButton(date, callback_data=date))
+
+    # Отправляем сообщение с клавиатурой
+    await bot.send_message(callback_query.from_user.id, "Выберите дату:", reply_markup=keyboard)
+
+    # Отвечаем на callback_query, чтобы скрыть у пользователя кнопку "назад"
+    await callback_query.answer()
 
 
 if __name__ == '__main__':

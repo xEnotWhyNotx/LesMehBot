@@ -37,7 +37,7 @@ def add_new_to_file_name():
 def delete_files():
     directory = "Admin/Destination/"
     fds = sorted(os.listdir('Admin/Destination/'))
-    dates = find_date_from_name_file(fds)
+    # dates = find_date_from_name_file(fds)
     arr_for_delete = []
     for file in fds:
         if file.find("___НОВОЕ___") < 0:

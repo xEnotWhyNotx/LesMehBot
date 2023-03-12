@@ -148,7 +148,7 @@ def Reader_files():
                                     cell_info2_1 = str(
                                         ws.cell(row=int(row) + 1, column=alphabet.find(column_group) + 3).value)
 
-                                    data_from_rows1.append(str(ws[cell_info_A].value) + " " + cell_info)
+                                    data_from_rows1.append(cell_info)
 
                                     aud1_cell = str(result_arr_ind_without_A_for_use[i][finder])
                                     aud11_cell = str(
@@ -160,11 +160,11 @@ def Reader_files():
                                     # data_from_rows2.append(
                                     #     ws.cell(row=row, column=alphabet.find(column_group) + 3).value)
                                     if cell_info2 != 'None':
-                                        data_from_rows2.append(str(ws[cell_info_A].value) + " " + cell_info2)
+                                        data_from_rows2.append(cell_info2)
                                     elif cell_info2 == 'None' and aud12_cell != 'None':
-                                        data_from_rows2.append(str(ws[cell_info_A].value) + " " + cell_info)
+                                        data_from_rows2.append(cell_info)
                                     elif cell_info2 == 'None' and aud12_cell == 'None':
-                                        data_from_rows2.append(str(ws[cell_info_A].value) + " " + cell_info2)
+                                        data_from_rows2.append(cell_info2)
                                     elif cell_info2 != 'None' and cell_info2_1 != 'None':
                                         print("XYXYXXYXYY")
                                         data_from_rows2.append(cell_info2_1)
