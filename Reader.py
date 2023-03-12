@@ -205,8 +205,8 @@ def Reader_files():
                             # print(data_number_aud1)
                             data_from_data_rows1[key] = data_from_rows1
                             data_from_data_rows2[key] = data_from_rows2
-                            data_from_data_aud1[key] = data_number_aud1
-                            data_from_data_aud2[key] = data_number_aud2
+                            data_from_data_aud1 = data_number_aud1
+                            data_from_data_aud2 = data_number_aud2
                             # print(data_from_data_rows2)
                     # print(data_from_data_rows2)
                     # print(data_from_data_aud1)
@@ -216,16 +216,18 @@ def Reader_files():
                               'w') as f:
                         for group, data in data_from_data_rows1.items():
                             f.write(f"{group}: {data}\n")
-                            f.write(f"{data_from_data_aud1}")
+                            f.write(f"{group}: {data_from_data_aud1}")
 
                     with open(os.path.join(dest_dir, os.path.splitext(file)[0] + '_' + f'{key}' + '__2__' + '.txt'),
                               'w') as f:
                         for group, data in data_from_data_rows2.items():
                             f.write(f"{group}: {data}\n")
-                            f.write(f"{data_from_data_aud2}")
+                            f.write(f"{group}: {data_from_data_aud2}")
                 end = time.time()
                 print("Время парсинга ", str(filename), " : ", end - start, "s")
         print("__________________________________")
 
     end_reader = time.time()
     print("Время полного выполнения Reader.py: ", end_reader - start_reader, "s")
+
+Reader_files()

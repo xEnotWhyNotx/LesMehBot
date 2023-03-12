@@ -6,8 +6,7 @@ from datetime import datetime, date, timedelta
 
 def get_filtered_files(group_name, subgroup):
     directory = 'Admin/Destination'
-    # today = date.today()
-    today = date.today() - timedelta(days=4)
+    today = date.today()
     filtered_files = []
     for file_name in os.listdir(directory):
         if group_name in file_name and '__{}__'.format(subgroup) in file_name:
@@ -16,7 +15,7 @@ def get_filtered_files(group_name, subgroup):
                 continue
             date_end = file_name.find('.xls', date_start)
             if date_end < 0:
-                date_end = file_name.find(' .xls', date_start)
+                date_end = file_name.find('___НОВОЕ___.xls', date_start)
                 if date_end < 0:
                     continue
             date_str = file_name[date_start:date_end]
@@ -51,9 +50,8 @@ def reading(group_name, subgroup):
         print("Файлы не найдены")
 
     data_dir = 'Admin/Destination/'
-    # txt_files = [f for f in os.listdir(data_dir) if f.endswith('.txt')]
-    file = 'Расписание на 01.03.2023 .xls_ОЛ-11__1__.txt'
-    file_path = os.path.join(data_dir, file)
+    file = files
+    file_path = os.path.join(data_dir, file[0])
 
     with open(file_path, "r") as f:
         content = f.read()
@@ -61,7 +59,7 @@ def reading(group_name, subgroup):
     lines = content.split('\n')
 
     group_name = lines[0].split(":")[0]
-    subject_teacher_names = lines[0].split(":")[2].split(",")
+    subject_teacher_names = lines[0].split(":")[1].split(",")
     subject_names = subject_teacher_names[::2]
     teacher_names = subject_teacher_names[1::2]
 
@@ -77,5 +75,4 @@ def reading(group_name, subgroup):
     return output
 
 
-# reading("ОЛ-11", "1")
-add_new_to_file_name()
+print(reading("ОЛ-11", "1"))
