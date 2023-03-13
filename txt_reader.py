@@ -6,7 +6,7 @@ from datetime import datetime, date, timedelta
 
 def get_filtered_files(group_name, subgroup):
     directory = 'Admin/Destination'
-    today = date.today() - timedelta(days=4)
+    today = date.today()
     filtered_files = []
     for file_name in os.listdir(directory):
         if group_name in file_name and '__{}__'.format(subgroup) in file_name:
