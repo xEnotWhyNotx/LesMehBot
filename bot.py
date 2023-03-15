@@ -5,6 +5,7 @@ from aiogram.utils import executor
 from INFO import BOT_TOKEN
 from txt_reader import reading, find_date_from_name_file
 
+
 logging.basicConfig(level=logging.INFO)
 
 # Создаем экземпляр бота и диспетчер
