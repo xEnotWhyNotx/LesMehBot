@@ -204,7 +204,7 @@ def Reader_files():
                             # print(data_from_rows)
                             # print(data_number_aud1)
                             data_from_data_rows1[key] = data_from_rows1
-                            print("data ", data_from_data_rows1)
+                            # print("data ", data_from_data_rows1)
                             data_from_data_rows2[key] = data_from_rows2
                             data_from_data_aud1 = data_number_aud1
                             data_from_data_aud2 = data_number_aud2
