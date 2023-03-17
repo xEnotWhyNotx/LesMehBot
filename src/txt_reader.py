@@ -69,8 +69,8 @@ def reading(group_name, subgroup, date):
             subject_names = subject_teacher_names[::2]
             teacher_names = subject_teacher_names[1::2]
 
-            classroom_numbers = lines[1].split(";")[1].split(",")
-            classroom_numbers = [num.strip() for num in classroom_numbers]
+            classroom_numbers1 = lines[1].split(";")[1].split(",")
+            classroom_numbers = [num.strip() for num in classroom_numbers1]
 
             output = f"Расписание группы {group_name}\n"
             for i in range(len(subject_names)):
