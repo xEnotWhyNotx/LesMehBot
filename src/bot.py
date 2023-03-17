@@ -7,9 +7,6 @@ from aiogram.utils import executor
 from INFO import BOT_TOKEN
 from datetime import datetime, date, timedelta
 
-# 6025760129:AAFhkR0Z9DieQIczsQNnFcRV25g51yEPOV8
-# SierraEchoRomeoGolfEchoYankee
-
 
 logging.basicConfig(level=logging.INFO)
 
