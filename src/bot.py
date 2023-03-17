@@ -1,9 +1,14 @@
 import logging
+import os
+import re
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils import executor
 from INFO import BOT_TOKEN
-from txt_reader import reading, find_date_from_name_file
+from datetime import datetime, date, timedelta
+
+# 6025760129:AAFhkR0Z9DieQIczsQNnFcRV25g51yEPOV8
+# SierraEchoRomeoGolfEchoYankee
 
 
 logging.basicConfig(level=logging.INFO)
@@ -41,7 +46,7 @@ user_data = {}
 
 # global dates
 
-def split_groups(group):
+async def split_groups(group):
     split_groups = []
     if len(group) > 5:
         prefix, suffixes = group.split('-')
@@ -52,11 +57,95 @@ def split_groups(group):
     return split_groups
 
 
-def search_in_splitted_groups(group_num):
+def get_filtered_files(group_name, subgroup):
+    directory = 'Admin/Destination'
+    today = date.today()
+    filtered_files = []
+    for file_name in os.listdir(directory):
+        if group_name in file_name and '__{}__'.format(subgroup) in file_name:
+            date_start = file_name.find(' на ') + 4
+            if date_start < 4:
+                continue
+            date_end = file_name.find('.xls', date_start)
+            if date_end < 0:
+                date_end = file_name.find('___НОВОЕ___.xls', date_start)
+                if date_end < 0:
+                    continue
+            date_str = file_name[date_start:date_end]
+            if len(date_str) > 10:
+                date_str = date_str[:10]
+            try:
+                file_date = datetime.strptime(date_str, '%d.%m.%Y').date()
+            except ValueError:
+                try:
+                    file_date = datetime.strptime(date_str, '%d.%m.%y').date()
+                except ValueError:
+                    continue
+            if file_date >= today:
+                filtered_files.append(file_name)
+    return filtered_files
+
+
+def find_date_from_name_file(group_name, subgroup):
+    files = get_filtered_files(group_name, subgroup)
+    date_str = []
+    for file in files:
+        date_start = file.find(" на ") + 4
+        date_end = file.find(".2023")
+        date_str.append(file[date_start:date_end])
+    return date_str
+
+
+async def reading(group_name, subgroup, date):
+    files = get_filtered_files(group_name, subgroup)
+    date_for_use = date
+    data_dir = 'Admin/Destination/'
+    for file in files:
+        if file.find(str(date_for_use)) > 0:
+            file_for_use = file
+            file_path = os.path.join(data_dir, file_for_use)
+
+            with open(file_path, "r") as f:
+                content = f.read()
+
+            lines = content.split('\n')
+
+            group_name = lines[0].split(";")[0]
+            # subject_teacher_names = lines[0].split(";")[1].split(",")
+            # print(subject_teacher_names)
+            temp = str(lines[0].split(";")[1]).replace('"','').replace('[', '').replace(']','')
+            subject_teacher_names = re.findall(r"'(.*?)'", temp)
+            # print(type(subject_teacher_names))
+            subject_names = subject_teacher_names[0::2]
+            teacher_names = subject_teacher_names[1::2]
+
+            classroom_numbers1 = lines[1].split(";")[1].split(",")
+            classroom_numbers = [num.strip() for num in classroom_numbers1]
+            # print(subject_names)
+            # print(classroom_numbers)
+            # print(len(subject_names))
+            # print(len(classroom_numbers))
+
+
+            output = f"Расписание группы {group_name}\n"
+            for i in range(len(subject_names)):
+                sub_name = subject_names[i].replace("'", "").replace('[', '').replace(']', '')
+                tech_name = teacher_names[i].replace('[', '').replace(']', '').replace("'", "")
+                print(i)
+                class_name = classroom_numbers[i].replace('{', '').replace('}', '').replace('[', '').replace(']', '').replace("'", "")
+                print(class_name)
+                output += f"{i + 1}. {sub_name}\n"
+                output += f"     {tech_name}\n"
+                output += f"     Аудитория: {class_name}\n"
+            return output
+
+async def search_in_splitted_groups(group_num):
+    group_nuzn = ''
     for group in groups:
-        groups_splitted = split_groups(group)
+        groups_splitted = await split_groups(group)
         if group_num in groups_splitted:
-            return group
+            group_nuzn = group
+    return group_nuzn
 
 
 # Обработчик команды /start или текстового сообщения с названием группы
@@ -71,7 +160,7 @@ async def process_start_command(message: types.Message):
 @dp.message_handler(lambda message: message.text.upper() in groups1)
 async def process_group_command(message: types.Message):
     # Запоминаем выбранную группу
-    user_data['group'] = search_in_splitted_groups(message.text.upper())
+    user_data['group'] = await search_in_splitted_groups(message.text.upper())
 
     # Создаем клавиатуру с кнопками подгрупп
     keyboard = InlineKeyboardMarkup()
@@ -121,7 +210,7 @@ async def date_callback_handler(callback_query: types.CallbackQuery):
     await callback_query.answer()
 
     # Вызываем функцию reading() и отправляем результат пользователю
-    result = reading(user_data['group'], user_data['subgroup'], user_data['date'])
+    result = await reading(user_data['group'], user_data['subgroup'], user_data['date'])
     await bot.send_message(callback_query.from_user.id, result)
 
 

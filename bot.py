@@ -219,7 +219,7 @@ async def date_callback_handler(callback_query: types.CallbackQuery):
 async def back_callback_handler(callback_query: types.CallbackQuery):
     # Создаем клавиатуру с кнопками дат
     keyboard = InlineKeyboardMarkup()
-    dates = await find_date_from_name_file(user_data['group'], user_data['subgroup'])
+    dates = find_date_from_name_file(user_data['group'], user_data['subgroup'])
     for date in dates:
         keyboard.add(InlineKeyboardButton(date, callback_data=date))
 
