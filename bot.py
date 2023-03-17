@@ -112,20 +112,23 @@ async def reading(group_name, subgroup, date):
             # subject_teacher_names = lines[0].split(";")[1].split(",")
             # print(subject_teacher_names)
             temp = str(lines[0].split(";")[1]).replace('"','').replace('[', '').replace(']','')
+            print(temp)
             subject_teacher_names = re.findall(r"'(.*?)'", temp)
-            # print(type(subject_teacher_names))
+            print(subject_teacher_names)
             subject_names = subject_teacher_names[0::2]
             teacher_names = subject_teacher_names[1::2]
+            print(teacher_names)
 
             classroom_numbers1 = lines[1].split(";")[1].split(",")
             classroom_numbers = [num.strip() for num in classroom_numbers1]
-            # print(subject_names)
-            # print(classroom_numbers)
-            # print(len(subject_names))
-            # print(len(classroom_numbers))
+            print(subject_names)
+            print(classroom_numbers)
+            print(len(subject_names))
+            print(len(classroom_numbers))
 
 
             output = f"Расписание группы {group_name}\n"
+            print(output)
             for i in range(len(subject_names)):
                 sub_name = subject_names[i].replace("'", "").replace('[', '').replace(']', '')
                 tech_name = teacher_names[i].replace('[', '').replace(']', '').replace("'", "")

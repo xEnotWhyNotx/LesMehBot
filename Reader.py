@@ -148,7 +148,7 @@ def Reader_files():
                                     cell_info2_1 = str(
                                         ws.cell(row=int(row) + 1, column=alphabet.find(column_group) + 3).value)
 
-                                    data_from_rows1.append(cell_info)
+                                    data_from_rows1.append(str(cell_info))
 
                                     aud1_cell = str(result_arr_ind_without_A_for_use[i][finder])
                                     aud11_cell = str(
@@ -190,20 +190,21 @@ def Reader_files():
                                     else:
                                         data_number_aud2.append('None')
                                 else:
-                                    data_from_rows1.append(
-                                        ws.cell(row=row, column=alphabet.find(column_group) + 1).value)
+                                    data_from_rows1.append(str(
+                                        ws.cell(row=row, column=alphabet.find(column_group) + 1).value))
                                     cell_info = str(ws.cell(row=row, column=alphabet.find(column_group) + 1).value)
                                     cell_info2 = str(ws.cell(row=row, column=alphabet.find(column_group) + 3).value)
                                     cell_info2_1 = str(
                                         ws.cell(row=row, column=alphabet.find(column_group) + 3).value)
                                     if cell_info2 != 'None':
-                                        data_from_rows2.append(cell_info2_1)
+                                        data_from_rows2.append(str(cell_info2_1))
                                     else:
-                                        data_from_rows2.append(cell_info)
+                                        data_from_rows2.append(str(cell_info))
 
                             # print(data_from_rows)
                             # print(data_number_aud1)
                             data_from_data_rows1[key] = data_from_rows1
+                            print("data ", data_from_data_rows1)
                             data_from_data_rows2[key] = data_from_rows2
                             data_from_data_aud1 = data_number_aud1
                             data_from_data_aud2 = data_number_aud2
