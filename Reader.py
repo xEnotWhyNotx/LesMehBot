@@ -208,15 +208,6 @@ def Reader_files():
                             all_data_collect[str(date_str)][key]['2']['teacher'] = data_from_data_rows2[key][1::2]
                             all_data_collect[str(date_str)][key]['2']['aud'] = data_from_data_aud2
 
-                            # all_data_collect[str(date_str)].append({
-                            #     'group': key,
-                            #     'lesson1': data_from_data_rows1[key][0::2],
-                            #     'teachers1': data_from_data_rows1[key][1::2],
-                            #     'aud1': data_from_data_aud1,
-                            #     'lesson2': data_from_data_rows2[key][0::2],
-                            #     'teachers2': data_from_data_rows2[key][1::2],
-                            #     'aud2': data_from_data_aud2,
-                            # })
 
                 end = time.time()
                 print("Время парсинга ", str(filename), ": ", end - start, "s")
@@ -225,5 +216,3 @@ def Reader_files():
         json.dump(all_data_collect, f)
     end_reader = time.time()
     print("Время полного выполнения Reader.py: ", end_reader - start_reader, "s")
-
-Reader_files()

@@ -1,18 +1,30 @@
 import logging
-import os
-import re
+import json
+
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import Command
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from aiogram.utils import executor
-from INFO import BOT_TOKEN
 from datetime import datetime, date, timedelta
+from INFO import BOT_TOKEN
 
-
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 
-# Создаем экземпляр бота и диспетчер
+# Initialize bot and dispatcher
 bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher(bot)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
+
+
+class UserState(StatesGroup):
+    WAITING_GROUP_NAME = State()
+    WAITING_SUBGROUP = State()
+    WAITING_DATE = State()
+
 
 # Список групп
 groups = ['АМ-31,33', 'АМ-32,34', 'АМ-41', 'АМ-42,43', 'АС-11', 'АЭ-11', 'АЭ-21,22', 'АЭ-31,32', 'БУ-21,22',
@@ -37,11 +49,17 @@ groups1 = ['АМ-31', 'АМ-33', 'АМ-32', 'АМ-34', 'АМ-41', 'АМ-42', 'А
            'ЮР-11', 'ЮР-13', 'ЮР-12', 'ЮР-21', 'ЮР-23', 'ЮР-22', 'ЮР-24', 'ЮР-25', 'ЮР-31', 'ЮР-33', 'ЮР-32', 'ЮР-34',
            'ЮР-35', 'ЮР-36']
 
-subgroups = ['1', '2']
-user_data = {}
+SUBGROUPS = ['1', '2']
 
 
-# global dates
+async def search_in_splitted_groups(group_num):
+    group_nuzn = ''
+    for group in groups:
+        groups_splitted = await split_groups(group)
+        if group_num in groups_splitted:
+            group_nuzn = group
+    return group_nuzn
+
 
 async def split_groups(group):
     split_groups = []
@@ -54,177 +72,146 @@ async def split_groups(group):
     return split_groups
 
 
-def get_filtered_files(group_name, subgroup):
-    directory = 'Admin/Destination'
+async def search_date(group, subgroup):
     today = date.today()
-    filtered_files = []
-    for file_name in os.listdir(directory):
-        if group_name in file_name and '__{}__'.format(subgroup) in file_name:
-            date_start = file_name.find(' на ') + 4
-            if date_start < 4:
-                continue
-            date_end = file_name.find('.xls', date_start)
-            if date_end < 0:
-                date_end = file_name.find('___НОВОЕ___.xls', date_start)
-                if date_end < 0:
-                    continue
-            date_str = file_name[date_start:date_end]
-            if len(date_str) > 10:
-                date_str = date_str[:10]
-            try:
-                file_date = datetime.strptime(date_str, '%d.%m.%Y').date()
-            except ValueError:
-                try:
-                    file_date = datetime.strptime(date_str, '%d.%m.%y').date()
-                except ValueError:
-                    continue
-            if file_date >= today:
-                filtered_files.append(file_name)
-    return filtered_files
+    with open('all_data.json') as f:
+        data_json = json.load(f)
+    dates = set()
+    for day in data_json:
+        day_info = data_json[day]
+        date_clear = str(day).replace('[', '').replace(']', '').replace("'", "")
+        date_for = date_clear + '.2023'
+        for collect in day_info:
+            if collect == group and subgroup == '1':
+                file_date = datetime.strptime(date_for, '%d.%m.%Y').date()
+                if file_date >= today:
+                    dates.add(date_clear)
+            if collect == group and subgroup == '2':
+                file_date = datetime.strptime(date_for, '%d.%m.%Y').date()
+                if file_date >= today:
+                    dates.add(date_clear)
+    timeList = list(dates)
+    return sorted(timeList)
 
 
-def find_date_from_name_file(group_name, subgroup):
-    files = get_filtered_files(group_name, subgroup)
-    date_str = []
-    for file in files:
-        date_start = file.find(" на ") + 4
-        date_end = file.find(".2023")
-        date_str.append(file[date_start:date_end])
-    return date_str
+async def reading_json(group_name, subgroup, date_search):
+    with open('all_data.json') as x:
+        data_json = json.load(x)
+
+    key_day = date_search
+    key_group = group_name
+    key_subgroup = subgroup
+
+    lessons = data_json[key_day][key_group][key_subgroup]['lesson']
+    teachers = data_json[key_day][key_group][key_subgroup]['teacher']
+    auds = data_json[key_day][key_group][key_subgroup]['aud']
+
+    output = f"Расписание группы {group_name}\n"
+    for i in range(len(lessons)):
+        sub_name = lessons[i]
+        tech_name = teachers[i]
+        class_name = auds[i]
+        if sub_name != 'None':
+            output += f"{i + 1}. {sub_name}\n"
+        if tech_name != 'None':
+            output += f"    {tech_name}\n"
+        if class_name != 'None':
+            output += f"    Аудитория: {class_name}\n"
+    return output
 
 
-async def reading(group_name, subgroup, date):
-    files = get_filtered_files(group_name, subgroup)
-    date_for_use = date
-    data_dir = 'Admin/Destination/'
-    for file in files:
-        if file.find(str(date_for_use)) > 0:
-            file_for_use = file
-            file_path = os.path.join(data_dir, file_for_use)
-
-            with open(file_path, "r") as f:
-                content = f.read()
-
-            lines = content.split('\n')
-
-            group_name = lines[0].split(";")[0]
-            # subject_teacher_names = lines[0].split(";")[1].split(",")
-            # print(subject_teacher_names)
-            temp = str(lines[0].split(";")[1]).replace('"','').replace('[', '').replace(']','')
-            subject_teacher_names = re.findall(r"'(.*?)'", temp)
-            # print(type(subject_teacher_names))
-            subject_names = subject_teacher_names[0::2]
-            teacher_names = subject_teacher_names[1::2]
-
-            classroom_numbers1 = lines[1].split(";")[1].split(",")
-            classroom_numbers = [num.strip() for num in classroom_numbers1]
-            # print(subject_names)
-            # print(classroom_numbers)
-            # print(len(subject_names))
-            # print(len(classroom_numbers))
+@dp.message_handler(commands='start')
+async def cmd_start(message: types.Message):
+    await message.answer(
+        "Привет Введи название группы (пример ОЛ-11 или ОЛ-12):",
+        reply_markup=types.ReplyKeyboardRemove(),
+    )
+    # await UserState.WAITING_GROUP_NAME.set()
 
 
-            output = f"Расписание группы {group_name}\n"
-            for i in range(len(subject_names)):
-                sub_name = subject_names[i].replace("'", "").replace('[', '').replace(']', '')
-                tech_name = teacher_names[i].replace('[', '').replace(']', '').replace("'", "")
-                print(i)
-                class_name = classroom_numbers[i].replace('{', '').replace('}', '').replace('[', '').replace(']', '').replace("'", "")
-                print(class_name)
-                output += f"{i + 1}. {sub_name}\n"
-                output += f"     {tech_name}\n"
-                output += f"     Аудитория: {class_name}\n"
-            return output
-
-async def search_in_splitted_groups(group_num):
-    group_nuzn = ''
-    for group in groups:
-        groups_splitted = await split_groups(group)
-        if group_num in groups_splitted:
-            group_nuzn = group
-    return group_nuzn
+@dp.message_handler(lambda message: message.text.upper() not in groups1,
+                    state=UserState.WAITING_GROUP_NAME)
+async def process_invalid_group_name(message: types.Message):
+    await message.answer("Некорректное название группы. Попробуйте еще раз.")
 
 
-# Обработчик команды /start или текстового сообщения с названием группы
-@dp.message_handler(commands=['start'])
-async def process_start_command(message: types.Message):
-    # Отправляем сообщение с приветствием и инструкцией
-    await message.reply("Привет! Я помогу тебе получить расписание занятий. "
-                        "Введите название группы, например 'ОЛ-11' или 'ОЛ-21'.")
-
-
-# Обработчик сообщений с названием группы
 @dp.message_handler(lambda message: message.text.upper() in groups1)
-async def process_group_command(message: types.Message):
-    # Запоминаем выбранную группу
-    user_data['group'] = await search_in_splitted_groups(message.text.upper())
+async def process_group_name(message: types.Message, state: FSMContext):
+    await UserState.WAITING_GROUP_NAME.set()
+    group_name = await search_in_splitted_groups(message.text.upper())
 
-    # Создаем клавиатуру с кнопками подгрупп
-    keyboard = InlineKeyboardMarkup()
-    for subgroup in subgroups:
-        keyboard.add(InlineKeyboardButton(subgroup, callback_data=subgroup))
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    for subgroup in SUBGROUPS:
+        button = InlineKeyboardButton(
+            text=f"Подгруппа {subgroup}",
+            callback_data=subgroup
+        )
+        keyboard.add(button)
 
-    # Отправляем сообщение с клавиатурой
-    await message.reply("Выбери подгруппу", reply_markup=keyboard)
+    await message.answer(
+        "Выберите подгруппу:",
+        reply_markup=keyboard,
+    )
+
+    await UserState.WAITING_SUBGROUP.set()
+    await state.update_data(group_name=group_name)
 
 
-# Обработчик нажатия на кнопку подгруппы
-@dp.callback_query_handler(lambda c: c.data in subgroups)
-async def subgroup_callback_handler(callback_query: types.CallbackQuery):
-    # Получаем выбранную подгруппу
+@dp.callback_query_handler(lambda c: True, state=UserState.WAITING_SUBGROUP)
+async def process_subgroup(callback_query: types.CallbackQuery, state: FSMContext):
     subgroup = callback_query.data
-    user_data['subgroup'] = subgroup
 
-    # Создаем клавиатуру с кнопками дат
-    keyboard = InlineKeyboardMarkup()
-    dates = find_date_from_name_file(user_data['group'], user_data['subgroup'])
-    for date in dates:
-        keyboard.add(InlineKeyboardButton(date, callback_data=date))
+    data = await state.get_data()
+    group_name = data.get("group_name")
 
-    # Отправляем сообщение с клавиатурой
-    await bot.send_message(callback_query.from_user.id, f"Вы выбрали {subgroup}. Выберите дату:", reply_markup=keyboard)
+    keyboard = InlineKeyboardMarkup(row_width=2)
 
-    # Отвечаем на callback_query, чтобы скрыть у пользователя кнопки с подгруппами
-    await callback_query.answer()
+    DATES = await search_date(group_name, subgroup)
+    print(DATES)
+    for date in DATES:
+        button = InlineKeyboardButton(
+            text=date,
+            callback_data=f"{group_name}_{subgroup}_{date}"
+        )
+        keyboard.add(button)
 
+    await bot.edit_message_text(
+        chat_id=callback_query.message.chat.id,
+        message_id=callback_query.message.message_id,
+        text="Выберите день:",
+        reply_markup=keyboard,
+    )
 
-# Обработчик нажатия на кнопку даты
-@dp.callback_query_handler(lambda c: c.data in find_date_from_name_file(user_data['group'], user_data['subgroup']))
-async def date_callback_handler(callback_query: types.CallbackQuery):
-    # Получаем выбранную дату
-    date = callback_query.data
-    user_data['date'] = date
-
-    # Создаем клавиатуру с кнопкой "назад"
-    keyboard = InlineKeyboardMarkup()
-    keyboard.add(InlineKeyboardButton("Назад", callback_data="back"))
-
-    # Отправляем сообщение с клавиатурой
-    await bot.send_message(callback_query.from_user.id,
-                           f"Выбрана подгруппа {user_data['subgroup']} группы {user_data['group']}", reply_markup=keyboard)
-
-    # Отвечаем на callback_query, чтобы скрыть у пользователя кнопки с датами
-    await callback_query.answer()
-
-    # Вызываем функцию reading() и отправляем результат пользователю
-    result = await reading(user_data['group'], user_data['subgroup'], user_data['date'])
-    await bot.send_message(callback_query.from_user.id, result)
+    await UserState.WAITING_DATE.set()
 
 
-# Обработчик нажатия на кнопку "назад"
-@dp.callback_query_handler(lambda c: c.data == "back")
-async def back_callback_handler(callback_query: types.CallbackQuery):
-    # Создаем клавиатуру с кнопками дат
-    keyboard = InlineKeyboardMarkup()
-    dates = find_date_from_name_file(user_data['group'], user_data['subgroup'])
-    for date in dates:
-        keyboard.add(InlineKeyboardButton(date, callback_data=date))
+@dp.callback_query_handler(lambda c: True, state=UserState.WAITING_DATE)
+async def process_date(callback_query: types.CallbackQuery, state: FSMContext):
+    data = callback_query.data.split("_")
+    group_name, subgroup, date = data[0], data[1], data[2]
 
-    # Отправляем сообщение с клавиатурой
-    await bot.send_message(callback_query.from_user.id, "Выберите дату:", reply_markup=keyboard)
+    await bot.answer_callback_query(callback_query.id)
 
-    # Отвечаем на callback_query, чтобы скрыть у пользователя кнопку "назад"
-    await callback_query.answer()
+    result_message = await reading_json(group_name, subgroup, date)
+
+    await bot.edit_message_text(
+        chat_id=callback_query.message.chat.id,
+        message_id=callback_query.message.message_id,
+        text=result_message,
+        parse_mode=ParseMode.HTML,
+    )
+
+    await state.finish()
+
+
+@dp.message_handler(Command("back"), state=UserState.WAITING_SUBGROUP)
+@dp.message_handler(Command("back"), state=UserState.WAITING_DATE)
+async def cmd_back(message: types.Message, state: FSMContext):
+    await message.answer(
+        "Введите название группы (ОЛ-11 или ОЛ-12):",
+        reply_markup=types.ReplyKeyboardRemove(),
+    )
+    await UserState.WAITING_GROUP_NAME.set()
 
 
 if __name__ == '__main__':

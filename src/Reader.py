@@ -2,11 +2,12 @@ import os
 import openpyxl as ox
 import numpy as np
 import time
+import json
 
 
 def Reader_files():
     start_reader = time.time()
-
+    all_data_collect = {}
     data_dir = 'Admin/Downloads'
     txt_files = [f for f in os.listdir(data_dir) if f.endswith('.txt')]
     xlsx_files = [v for v in os.listdir(data_dir) if v.endswith('.xlsx')]
@@ -26,10 +27,17 @@ def Reader_files():
                 line = line.strip().split(': ')
                 data[line[0]] = line[1]
         print(file)
-        # print(data)
 
         for filename in xlsx_files:
             if filename.endswith('.xlsx') and (str(filename)[:-4] + "txt") == file:
+
+                date_str = []
+                date_start = file.find(" на ") + 4
+                date_end = file.find(".2023")
+                date_str.append(file[date_start:date_end])
+                date_str = str(date_str).replace('[', '').replace(']', '').replace("'", "")
+                all_data_collect[str(date_str)] = {}
+
                 start = time.time()
                 # print(filename)
                 filepath = os.path.join(data_dir, filename)
@@ -108,14 +116,6 @@ def Reader_files():
                         range(result_arr_ind_without_A[i][0] - 1, result_arr_ind_without_A[i][-1] + 1))
                     result_arr_ind_without_A[i].append(result_arr_ind_without_A[i][-1] + 1)
 
-                # print(arr_A)
-                # print(arr_indexes_A)
-                # print(arr_indexes_without_A)
-                # print(result_arr)
-                # print(result_arr_ind)
-                # print(result_arr_ind_without_A)
-                # print(result_arr_ind_without_A_for_use)
-
                 ########################################################################################################
 
                 data_items = data.items()
@@ -123,8 +123,6 @@ def Reader_files():
                     cell_group = value
                     column_group = str(cell_group)[0]
                     row_group = int(str(cell_group)[1:])
-                    # print(row_group)
-                    # print(key)
 
                     # ищем значения в ячейках ниже на одну или две от известной ячейки
                     # i - индекс количества подмассивов в массиве
@@ -138,7 +136,6 @@ def Reader_files():
                             data_number_aud1 = []
                             data_from_rows2 = []
                             data_number_aud2 = []
-                            # print(row_group, result_arr_ind_without_A[i])
                             for row in range(row_group + 1, max(result_arr_ind_without_A[i]) + 1):
                                 if row in result_arr_ind_without_A_for_use[i]:
                                     finder = result_arr_ind_without_A_for_use[i].index(row)
@@ -155,10 +152,6 @@ def Reader_files():
                                         ws.cell(row=int(aud1_cell), column=alphabet.find(column_group) + 2).value)
                                     aud12_cell = str(
                                         ws.cell(row=int(aud1_cell), column=alphabet.find(column_group) + 4).value)
-                                    # print(aud12_cell)
-                                    # print(type(aud1_cell))
-                                    # data_from_rows2.append(
-                                    #     ws.cell(row=row, column=alphabet.find(column_group) + 3).value)
                                     if cell_info2 != 'None':
                                         data_from_rows2.append(cell_info2)
                                     elif cell_info2 == 'None' and aud12_cell != 'None':
@@ -200,33 +193,26 @@ def Reader_files():
                                         data_from_rows2.append(str(cell_info2_1))
                                     else:
                                         data_from_rows2.append(str(cell_info))
-
-                            # print(data_from_rows)
-                            # print(data_number_aud1)
                             data_from_data_rows1[key] = data_from_rows1
-                            print("data ", data_from_data_rows1)
                             data_from_data_rows2[key] = data_from_rows2
                             data_from_data_aud1 = data_number_aud1
                             data_from_data_aud2 = data_number_aud2
-                            # print(data_from_data_rows2)
-                    # print(data_from_data_rows2)
-                    # print(data_from_data_aud1)
-                    # print(data_from_data_aud2)
-                    # Создаем текстовый файл с названием текущего xlsx файла
-                    with open(os.path.join(dest_dir, os.path.splitext(file)[0] + '_' + f'{key}' + '__1__' + '.txt'),
-                              'w') as f:
-                        for group, data in data_from_data_rows1.items():
-                            f.write(f"{group}; {data}\n")
-                            f.write(f"{group}; {data_from_data_aud1}")
 
-                    with open(os.path.join(dest_dir, os.path.splitext(file)[0] + '_' + f'{key}' + '__2__' + '.txt'),
-                              'w') as f:
-                        for group, data in data_from_data_rows2.items():
-                            f.write(f"{group}; {data}\n")
-                            f.write(f"{group}; {data_from_data_aud2}")
+                            all_data_collect[str(date_str)][key] = {}
+                            all_data_collect[str(date_str)][key]['1'] = {}
+                            all_data_collect[str(date_str)][key]['2'] = {}
+                            all_data_collect[str(date_str)][key]['1']['lesson'] = data_from_data_rows1[key][0::2]
+                            all_data_collect[str(date_str)][key]['1']['teacher'] = data_from_data_rows1[key][1::2]
+                            all_data_collect[str(date_str)][key]['1']['aud'] = data_from_data_aud1
+                            all_data_collect[str(date_str)][key]['2']['lesson'] = data_from_data_rows2[key][0::2]
+                            all_data_collect[str(date_str)][key]['2']['teacher'] = data_from_data_rows2[key][1::2]
+                            all_data_collect[str(date_str)][key]['2']['aud'] = data_from_data_aud2
+
+
                 end = time.time()
-                print("Время парсинга ", str(filename), " : ", end - start, "s")
+                print("Время парсинга ", str(filename), ": ", end - start, "s")
         print("__________________________________")
-
+    with open('all_data.json', 'w') as f:
+        json.dump(all_data_collect, f)
     end_reader = time.time()
     print("Время полного выполнения Reader.py: ", end_reader - start_reader, "s")
