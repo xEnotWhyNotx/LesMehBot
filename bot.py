@@ -74,30 +74,57 @@ async def split_groups(group):
 
 
 async def search_date(group, subgroup):
-    today = date.today()
-    with open('all_data.json') as f:
-        data_json = json.load(f)
-    dates = set()
-    for day in data_json:
-        day_info = data_json[day]
-        date_clear = str(day).replace('[', '').replace(']', '').replace("'", "")
-        date_for = date_clear + '.2023'
-        for collect in day_info:
-            if collect == group and subgroup == '1':
-                file_date = datetime.strptime(date_for, '%d.%m.%Y').date()
-                if file_date >= today:
-                    dates.add(date_clear)
-            if collect == group and subgroup == '2':
-                file_date = datetime.strptime(date_for, '%d.%m.%Y').date()
-                if file_date >= today:
-                    dates.add(date_clear)
-    timeList = list(dates)
-    return sorted(timeList)
+    try:
+        today = date.today()
+        with open('all_data.json') as f:
+            data_json = json.load(f)
+        dates = set()
+        for day in data_json:
+            day_info = data_json[day]
+            date_clear = str(day).replace('[', '').replace(']', '').replace("'", "")
+            date_for = date_clear + '.2023'
+            for collect in day_info:
+                if collect == group and subgroup == '1':
+                    file_date = datetime.strptime(date_for, '%d.%m.%Y').date()
+                    if file_date >= today:
+                        dates.add(date_clear)
+                if collect == group and subgroup == '2':
+                    file_date = datetime.strptime(date_for, '%d.%m.%Y').date()
+                    if file_date >= today:
+                        dates.add(date_clear)
+        timeList = list(dates)
+        return sorted(timeList)
+    except Exception:
+        time.sleep(5)
+        today = date.today()
+        with open('all_data.json') as f:
+            data_json = json.load(f)
+        dates = set()
+        for day in data_json:
+            day_info = data_json[day]
+            date_clear = str(day).replace('[', '').replace(']', '').replace("'", "")
+            date_for = date_clear + '.2023'
+            for collect in day_info:
+                if collect == group and subgroup == '1':
+                    file_date = datetime.strptime(date_for, '%d.%m.%Y').date()
+                    if file_date >= today:
+                        dates.add(date_clear)
+                if collect == group and subgroup == '2':
+                    file_date = datetime.strptime(date_for, '%d.%m.%Y').date()
+                    if file_date >= today:
+                        dates.add(date_clear)
+        timeList = list(dates)
+        return sorted(timeList)
 
 
 async def reading_json(group_name, subgroup, date_search):
-    with open('all_data.json') as x:
-        data_json = json.load(x)
+    try:
+        with open('all_data.json') as x:
+            data_json = json.load(x)
+    except Exception:
+        time.sleep(5)
+        with open('all_data.json') as x:
+            data_json = json.load(x)
 
     key_day = date_search
     key_group = group_name
