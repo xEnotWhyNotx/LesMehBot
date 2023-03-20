@@ -1,5 +1,6 @@
 import logging
 import json
+import time
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -215,4 +216,8 @@ async def cmd_back(message: types.Message, state: FSMContext):
 
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    try:
+        executor.start_polling(dp, skip_updates=True)
+    except Exception:
+        time.sleep(5)
+        executor.start_polling(dp, skip_updates=True)
