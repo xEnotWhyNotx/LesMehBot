@@ -212,7 +212,7 @@ def Reader_files():
                 end = time.time()
                 print("Время парсинга ", str(filename), ": ", end - start, "s")
         print("__________________________________")
-    with open('all_data.json', 'w') as f:
+    with open('src/Admin/Destination/all_data.json', 'w') as f:
         json.dump(all_data_collect, f)
     end_reader = time.time()
     print("Время полного выполнения Reader.py: ", end_reader - start_reader, "s")
