@@ -22,6 +22,7 @@ dp = Dispatcher(bot, storage=storage)
 
 
 class UserState(StatesGroup):
+    UPDATING = State()
     WAITING_GROUP_NAME = State()
     WAITING_SUBGROUP = State()
     WAITING_DATE = State()
@@ -130,13 +131,13 @@ async def reading_json(group_name, subgroup, date_search):
     return output
 
 
-@dp.message_handler(commands='start')
+@dp.message_handler(commands='start', state=UserState.UPDATING)
 async def cmd_start(message: types.Message):
     await message.answer(
         "Привет Введи название группы (пример ОЛ-11 или ОЛ-12):",
         reply_markup=types.ReplyKeyboardRemove(),
     )
-    # await UserState.WAITING_GROUP_NAME.set()
+    await UserState.WAITING_GROUP_NAME.set()
 
 
 @dp.message_handler(lambda message: message.text.upper() not in groups1,

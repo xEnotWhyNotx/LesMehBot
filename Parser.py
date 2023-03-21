@@ -17,7 +17,8 @@ def parser():
         end_all_parse = time.time()
         print("Время полного выполнения программы: ", end_all_parse - start_all_parse, "s")
         print("Время полного выполнения программы: ", (end_all_parse - start_all_parse) / 60, "m")
-    except ConnectionError:
+    except ConnectionError or Exception:
+        print("connection_problem")
         parser()
 
 
@@ -29,5 +30,5 @@ if __name__ == '__main__':
         except Exception:
             time.sleep(5)
             print("Connection error!")
-            continue
+            parser()
         break
