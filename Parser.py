@@ -24,11 +24,5 @@ def parser():
 
 if __name__ == '__main__':
     while True:
-        try:
-            parser()
-            time.sleep(120)
-        except Exception:
-            time.sleep(5)
-            print("Connection error!")
-            parser()
-        break
+        parser()
+        time.sleep(60)
