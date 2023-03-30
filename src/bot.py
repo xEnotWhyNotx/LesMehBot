@@ -266,7 +266,8 @@ async def process_admin_login(message: types.Message, state: FSMContext):
         await AdminState.menu.set()
     else:
         # Отправляем сообщение об ошибке в случае неправильного пароля
-        await message.answer('Неверный пароль для входа в админ-панель!')
+        await message.answer('Неверный пароль для входа в админ-панель!\n'
+                             'Чтобы выйти из режима авторизации напиши /back')
         # сохраняем информацию о запросе в лог-файле
         bot_logger.info(f"User {message.from_user.id, message.from_user.username} entered invalid password")
 
@@ -387,6 +388,8 @@ async def process_date(callback_query: types.CallbackQuery, state: FSMContext):
 
 @dp.message_handler(Command("back"), state=UserState.WAITING_SUBGROUP)
 @dp.message_handler(Command("back"), state=UserState.WAITING_DATE)
+@dp.message_handler(Command("back"), state=AdminState.menu)
+@dp.message_handler(Command("back"), state=AdminState.admin_login)
 async def cmd_back(message: types.Message, state: FSMContext):
     await message.answer(
         "Введите название группы (ОЛ-11 или ОЛ-12):",
