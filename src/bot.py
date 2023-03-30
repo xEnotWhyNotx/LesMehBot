@@ -10,7 +10,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from aiogram.utils import executor
 from datetime import datetime, date, timedelta
-from INFO import BOT_TOKEN
+from INFO import BOT_TOKEN, ADMIN_PASSWORD
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -19,9 +19,18 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
+admins = set()
+
+
+# Определение класса состояний FSM
+class AdminState(StatesGroup):
+    menu = State()
+    admin_login = State()
 
 
 class UserState(StatesGroup):
+    WAITING_ADMIN_LOGIN = State()
+    WAITING_ADMIN_PASSWORD = State()
     UPDATING = State()
     WAITING_GROUP_NAME = State()
     WAITING_SUBGROUP = State()
@@ -131,17 +140,100 @@ async def reading_json(group_name, subgroup, date_search):
     return output
 
 
-@dp.message_handler(commands='start', state=UserState.UPDATING)
+# Функция для добавления пользователя в список администраторов
+async def add_admin(user_id: int):
+    """
+    Функция для добавления пользователя в список администраторов
+    """
+    # Добавляем user_id в список администраторов
+    admins.add(user_id)
+
+
+# Обработчик команды /start
+@dp.message_handler(commands=['start'])
+async def cmd_start(message: types.Message):
+    """
+    Обработчик команды /start
+    """
+    await message.answer("Привет! Напиши номер группы:")
+    await cmd_help(message)
+
+
+# Обработчик команды /help
+@dp.message_handler(Command("help"))
+async def cmd_help(message: types.Message):
+    """
+    Обработчик команды /help
+    """
+    await message.answer(
+        "Вот список моих команд:\n"
+        "/start - начать работу с ботом\n"
+        "/help - получить список команд"
+    )
+
+
+@dp.message_handler(commands=['start'])
 async def cmd_start(message: types.Message):
     await message.answer(
-        "Привет Введи название группы (пример ОЛ-11 или ОЛ-12):",
-        reply_markup=types.ReplyKeyboardRemove(),
+        "Привет Введи название группы (пример ОЛ-11 или ОЛ-12):"
     )
     await UserState.WAITING_GROUP_NAME.set()
 
 
-@dp.message_handler(lambda message: message.text.upper() not in groups1,
-                    state=UserState.WAITING_GROUP_NAME)
+# Обработчик команды /admin
+@dp.message_handler(Command("admin"))
+# Функция для входа в админку
+async def admin_login(message: types.Message):
+    """
+    Функция для входа в админку
+    """
+    await message.answer('Введите пароль для входа в админ-панель:')
+    # Переводим бота в состояние ожидания пароля для входа в админ-панель
+    await AdminState.admin_login.set()
+
+
+# Обработка пароля для входа в админку
+@dp.message_handler(state=AdminState.admin_login)
+async def process_admin_login(message: types.Message, state: FSMContext):
+    """
+    Обработка пароля для входа в админку
+    """
+
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(
+        InlineKeyboardButton("Статистика", callback_data="admin_stats"),
+        InlineKeyboardButton("Выход", callback_data="admin_exit"),
+    )
+    # Проверяем, является ли введенный пароль правильным
+    if message.text == ADMIN_PASSWORD:
+        # Удаляем состояние admin_login из контекста состояний
+        await state.finish()
+        # Добавляем пользователя в список администраторов
+        await add_admin(message.from_user.id)
+        # Отправляем сообщение об успешном входе в админ-панель
+        await message.answer(str(admins))
+        await message.answer('Добро пожаловать в админ-панель!', reply_markup=keyboard)
+        await AdminState.menu.set()
+    else:
+        # Отправляем сообщение об ошибке в случае неправильного пароля
+        await message.answer('Неверный пароль для входа в админ-панель!')
+
+
+# Обработчик инлайн-кнопок админ-панели
+@dp.callback_query_handler(state=AdminState.menu)
+async def process_callback_admin(callback_query: types.CallbackQuery, state: FSMContext):
+    """
+    Обработчик инлайн-кнопок админ-панели
+    """
+    data = callback_query.data
+    if data == "admin_stats":
+        await bot.answer_callback_query(callback_query.id, text="Текущая статистика: ...")
+    elif data == "admin_exit":
+        await bot.answer_callback_query(callback_query.id, text="Вы вышли из админ-панели.")
+        await state.finish()
+
+
+@dp.message_handler(lambda message: message.text.upper() not in groups1)
 async def process_invalid_group_name(message: types.Message):
     await message.answer("Некорректное название группы. Попробуйте еще раз.")
 
