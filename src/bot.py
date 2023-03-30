@@ -314,6 +314,7 @@ async def process_callback_admin(callback_query: types.CallbackQuery, state: FSM
 
 @dp.message_handler(lambda message: message.text.upper() not in groups1)
 async def process_invalid_group_name(message: types.Message):
+    user_logger.info(f"{message.from_user.id, message.from_user.username}")
     # сохраняем информацию о запросе в лог-файле
     chat_logger.info(
         f"chat {message.chat.id, message.chat.title} user {message.from_user.id, message.from_user.username} text {message.text}")
@@ -323,6 +324,7 @@ async def process_invalid_group_name(message: types.Message):
 async def process_group_name(message: types.Message, state: FSMContext):
     await UserState.WAITING_GROUP_NAME.set()
     group_name = await search_in_splitted_groups(message.text.upper())
+    user_logger.info(f"{message.from_user.id, message.from_user.username}")
     # сохраняем информацию о запросе в лог-файле
     bot_logger.info(
         f"User {message.from_user.id, message.from_user.username} selected {message.text.upper(), group_name}")
