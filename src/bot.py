@@ -1,6 +1,8 @@
 import logging
 import json
 import time
+import aioschedule
+import asyncio
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -10,7 +12,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ParseMode
 from aiogram.utils import executor
 from datetime import datetime, date, timedelta
-from INFO import BOT_TOKEN, ADMIN_PASSWORD
+from INFO import BOT_TOKEN, ADMIN_PASSWORD, ADMINS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +22,42 @@ bot = Bot(token=BOT_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 admins = set()
+
+# создаем логгер
+bot_logger = logging.getLogger('bot_logger')
+# создаем обработчик логов, который будет записывать сообщения в файл
+bot_handler = logging.FileHandler('bot.log')
+# создаем форматировщик сообщений, чтобы добавлять дату и время выполнения запроса
+bot_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+# привязываем обработчик к логгеру и добавляем к нему форматировщик сообщений
+bot_handler.setFormatter(bot_formatter)
+bot_logger.addHandler(bot_handler)
+# устанавливаем уровень логирования, чтобы сохранять только сообщения с уровнем INFO и выше
+bot_logger.setLevel(logging.INFO)
+
+# создаем логгер
+user_logger = logging.getLogger('user_logger')
+# создаем обработчик логов, который будет записывать сообщения в файл
+user_handler = logging.FileHandler('users.log')
+# создаем форматировщик сообщений, чтобы добавлять дату и время выполнения запроса
+user_formatter = logging.Formatter('%(asctime)s - %(message)s')
+# привязываем обработчик к логгеру и добавляем к нему форматировщик сообщений
+user_handler.setFormatter(user_formatter)
+user_logger.addHandler(user_handler)
+# устанавливаем уровень логирования, чтобы сохранять только сообщения с уровнем INFO и выше
+user_logger.setLevel(logging.INFO)
+
+# создаем логгер
+chat_logger = logging.getLogger('chat_logger')
+# создаем обработчик логов, который будет записывать сообщения в файл
+chat_handler = logging.FileHandler('chat.log')
+# создаем форматировщик сообщений, чтобы добавлять дату и время выполнения запроса
+chat_formatter = logging.Formatter('%(asctime)s - %(message)s')
+# привязываем обработчик к логгеру и добавляем к нему форматировщик сообщений
+chat_handler.setFormatter(chat_formatter)
+chat_logger.addHandler(chat_handler)
+# устанавливаем уровень логирования, чтобы сохранять только сообщения с уровнем INFO и выше
+chat_logger.setLevel(logging.INFO)
 
 
 # Определение класса состояний FSM
@@ -155,8 +193,15 @@ async def cmd_start(message: types.Message):
     """
     Обработчик команды /start
     """
-    await message.answer("Привет! Напиши номер группы:")
-    await cmd_help(message)
+    # сохраняем информацию о запросе в лог-файле
+    bot_logger.info(f"User {message.from_user.id, message.from_user.username} started the bot")
+    user_logger.info(f"{message.from_user.id, message.from_user.username}")
+    await message.answer(
+        "Привет!\n"
+        "Help-меню вызывается командой /help\n"
+        "Напиши номер группы\n"
+        "(например ОЛ-11):🔍")
+    # await cmd_help(message)
 
 
 # Обработчик команды /help
@@ -165,19 +210,17 @@ async def cmd_help(message: types.Message):
     """
     Обработчик команды /help
     """
+    # сохраняем информацию о запросе в лог-файле
+    bot_logger.info(f"User {message.from_user.id, message.from_user.username} entered to help menu")
     await message.answer(
-        "Вот список моих команд:\n"
-        "/start - начать работу с ботом\n"
-        "/help - получить список команд"
+        "Вот список моих команд:👨‍💻\n"
+        "/start - начать работу 👾\n"
+        "/help - получить список команд 🆘\n"
+        "/back - вернуться к выбору групп 🔍\n"
+        "/admin - админка 😎\n"
+        "Повторно прописывать команду /start не требуется, ты можешь сразу писать нужную группу :)\n"
+        "\n\nИ да, бота можно использовать в беседах. Не забудь, при добавлении бота в чат, выдать ему администратора, иначе он не сможет ответить на твои сообщения"
     )
-
-
-@dp.message_handler(commands=['start'])
-async def cmd_start(message: types.Message):
-    await message.answer(
-        "Привет Введи название группы (пример ОЛ-11 или ОЛ-12):"
-    )
-    await UserState.WAITING_GROUP_NAME.set()
 
 
 # Обработчик команды /admin
@@ -187,6 +230,8 @@ async def admin_login(message: types.Message):
     """
     Функция для входа в админку
     """
+    # сохраняем информацию о запросе в лог-файле
+    bot_logger.info(f"User {message.from_user.id, message.from_user.username} entered to admin login menu")
     await message.answer('Введите пароль для входа в админ-панель:')
     # Переводим бота в состояние ожидания пароля для входа в админ-панель
     await AdminState.admin_login.set()
@@ -201,8 +246,11 @@ async def process_admin_login(message: types.Message, state: FSMContext):
 
     keyboard = InlineKeyboardMarkup()
     keyboard.add(
-        InlineKeyboardButton("Статистика", callback_data="admin_stats"),
-        InlineKeyboardButton("Выход", callback_data="admin_exit"),
+        InlineKeyboardButton("Stats", callback_data="admin_stats"),
+        InlineKeyboardButton("Logs", callback_data="admin_log_upload"),
+        InlineKeyboardButton("Users", callback_data="admin_user_upload"),
+        InlineKeyboardButton("Chats", callback_data="admin_chat_upload"),
+        InlineKeyboardButton("Exit", callback_data="admin_exit"),
     )
     # Проверяем, является ли введенный пароль правильным
     if message.text == ADMIN_PASSWORD:
@@ -213,10 +261,14 @@ async def process_admin_login(message: types.Message, state: FSMContext):
         # Отправляем сообщение об успешном входе в админ-панель
         await message.answer(str(admins))
         await message.answer('Добро пожаловать в админ-панель!', reply_markup=keyboard)
+        # сохраняем информацию о запросе в лог-файле
+        bot_logger.info(f"User {message.from_user.id, message.from_user.username} entered to admin panel")
         await AdminState.menu.set()
     else:
         # Отправляем сообщение об ошибке в случае неправильного пароля
         await message.answer('Неверный пароль для входа в админ-панель!')
+        # сохраняем информацию о запросе в лог-файле
+        bot_logger.info(f"User {message.from_user.id, message.from_user.username} entered invalid password")
 
 
 # Обработчик инлайн-кнопок админ-панели
@@ -228,6 +280,28 @@ async def process_callback_admin(callback_query: types.CallbackQuery, state: FSM
     data = callback_query.data
     if data == "admin_stats":
         await bot.answer_callback_query(callback_query.id, text="Текущая статистика: ...")
+    elif data == "admin_log_upload":
+        with open('bot.log', 'rb') as file:
+            # отправляем файл ботом
+            await bot.send_document(callback_query.from_user.id, file)
+            file.close()
+        # удаляем все данные из файла
+        with open("bot.log", "w") as file:
+            file.write("")
+            file.close()
+    elif data == "admin_chat_upload":
+        with open('chat.log', 'rb') as file:
+            # отправляем файл ботом
+            await bot.send_document(callback_query.from_user.id, file)
+            file.close()
+        # удаляем все данные из файла
+        with open("chat.log", "w") as file:
+            file.write("")
+            file.close()
+    elif data == "admin_user_upload":
+        with open('users.log', 'rb') as file:
+            # отправляем файл ботом
+            await bot.send_document(callback_query.from_user.id, file)
     elif data == "admin_exit":
         await bot.answer_callback_query(callback_query.id, text="Вы вышли из админ-панели.")
         await state.finish()
@@ -235,14 +309,18 @@ async def process_callback_admin(callback_query: types.CallbackQuery, state: FSM
 
 @dp.message_handler(lambda message: message.text.upper() not in groups1)
 async def process_invalid_group_name(message: types.Message):
-    await message.answer("Некорректное название группы. Попробуйте еще раз.")
+    # сохраняем информацию о запросе в лог-файле
+    chat_logger.info(
+        f"chat {message.chat.id, message.chat.title} user {message.from_user.id, message.from_user.username} text {message.text}")
 
 
 @dp.message_handler(lambda message: message.text.upper() in groups1)
 async def process_group_name(message: types.Message, state: FSMContext):
     await UserState.WAITING_GROUP_NAME.set()
     group_name = await search_in_splitted_groups(message.text.upper())
-
+    # сохраняем информацию о запросе в лог-файле
+    bot_logger.info(
+        f"User {message.from_user.id, message.from_user.username} selected {message.text.upper(), group_name}")
     keyboard = InlineKeyboardMarkup(row_width=2)
     for subgroup in SUBGROUPS:
         button = InlineKeyboardButton(
@@ -303,7 +381,7 @@ async def process_date(callback_query: types.CallbackQuery, state: FSMContext):
         text=result_message,
         parse_mode=ParseMode.HTML,
     )
-
+    await UserState.WAITING_GROUP_NAME.set()
     await state.finish()
 
 
@@ -312,9 +390,9 @@ async def process_date(callback_query: types.CallbackQuery, state: FSMContext):
 async def cmd_back(message: types.Message, state: FSMContext):
     await message.answer(
         "Введите название группы (ОЛ-11 или ОЛ-12):",
-        reply_markup=types.ReplyKeyboardRemove(),
+        reply_markup=types.ReplyKeyboardRemove()
     )
-    await UserState.WAITING_GROUP_NAME.set()
+    await state.reset_state()
 
 
 if __name__ == '__main__':
