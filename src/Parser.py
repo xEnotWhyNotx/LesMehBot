@@ -25,4 +25,4 @@ def parser():
 if __name__ == '__main__':
     while True:
         parser()
-        time.sleep(30)
+        time.sleep(60)
