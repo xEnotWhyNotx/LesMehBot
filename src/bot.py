@@ -264,10 +264,14 @@ async def process_admin_login(message: types.Message, state: FSMContext):
         # сохраняем информацию о запросе в лог-файле
         bot_logger.info(f"User {message.from_user.id, message.from_user.username} entered to admin panel")
         await AdminState.menu.set()
+    elif message.text == '0':
+        await message.answer('Вы вышли из режима авторизации\n'
+                             'Напиши номер группы или используй команду /help')
+        await state.reset_state()
     else:
         # Отправляем сообщение об ошибке в случае неправильного пароля
         await message.answer('Неверный пароль для входа в админ-панель!\n'
-                             'Чтобы выйти из режима авторизации напиши /back')
+                             'Чтобы выйти из режима авторизации напиши "0"')
         # сохраняем информацию о запросе в лог-файле
         bot_logger.info(f"User {message.from_user.id, message.from_user.username} entered invalid password")
 
