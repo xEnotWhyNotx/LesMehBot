@@ -324,8 +324,11 @@ async def send_broadcast_message(message: types.Message):
         users = f.readlines()
 
     for user in users:
-        # Отправляем сообщение каждому пользователю
-        await bot.send_message(user, message.text)
+        try:
+            await bot.send_message(user, message.text)
+        except Exception:
+            bot_logger.info(f"Ошибка отправки сообщения пользователю {user}: бот не может начать диалог с пользователем")
+            continue
 
 
 # Обработчик инлайн-кнопок админ-панели
