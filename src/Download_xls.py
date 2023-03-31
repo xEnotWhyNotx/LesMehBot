@@ -2,6 +2,7 @@ import os
 import requests
 import re
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
 
 
 def Download_xls():
@@ -37,3 +38,19 @@ def Download_xls():
                 print(f'{filename} скачан')
 
     print('Загрузка завершена')
+
+
+def delete_downloaded_files():
+    # Определяем дату, которая является границей для удаления файлов
+    border_date = datetime.today() - timedelta(days=2)
+
+    # Перебираем все файлы в директории Admin/Downloads
+    for filename in os.listdir("Admin/Downloads/"):
+        # Проверяем, что файл является файлом расписания
+        if filename.startswith("Расписание на "):
+            # Получаем дату из названия файла
+            file_date = datetime.strptime(str(filename[14:24]), "%d.%m.%Y")
+            # Проверяем, что дата файла старше границы для удаления
+            if file_date <= border_date:
+                # Удаляем файл
+                os.remove(os.path.join("Admin/Downloads/", filename))

@@ -3,6 +3,7 @@ import json
 import time
 import aioschedule
 import asyncio
+import re
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -64,6 +65,7 @@ chat_logger.setLevel(logging.INFO)
 class AdminState(StatesGroup):
     menu = State()
     admin_login = State()
+    broadcast_text = State()
 
 
 class UserState(StatesGroup):
@@ -247,6 +249,7 @@ async def process_admin_login(message: types.Message, state: FSMContext):
     keyboard = InlineKeyboardMarkup()
     keyboard.add(
         InlineKeyboardButton("Stats", callback_data="admin_stats"),
+        InlineKeyboardButton("Dist", callback_data="admin_distribution"),
         InlineKeyboardButton("Logs", callback_data="admin_log_upload"),
         InlineKeyboardButton("Users", callback_data="admin_user_upload"),
         InlineKeyboardButton("Chats", callback_data="admin_chat_upload"),
@@ -276,6 +279,61 @@ async def process_admin_login(message: types.Message, state: FSMContext):
         bot_logger.info(f"User {message.from_user.id, message.from_user.username} entered invalid password")
 
 
+async def clear_bot_log():
+    # удаляем все данные из файла
+    with open("bot.log", "w") as file:
+        file.write("")
+        file.close()
+
+
+async def clear_chat_log():
+    # удаляем все данные из файла
+    with open("chat.log", "w") as file:
+        file.write("")
+        file.close()
+
+
+async def extract_value(string):
+    # ваша функция для извлечения значения из строки
+    match = re.search(r'\((\d+),', string)
+    if match:
+        value = match.group(1)
+        return value
+    return None
+
+
+async def write_unique_id():
+    with open('bot.log', 'r') as f:
+        log_data = f.readlines()
+    with open('users.log', 'r') as ff:
+        users_data = ff.readlines()
+
+    values = set()
+    for line in log_data:
+        value = await extract_value(line)
+        if value:
+            values.add(value)
+    for line in users_data:
+        value = await extract_value(line)
+        if value:
+            values.add(value)
+
+    with open('users_distr.log', 'w') as f:
+        for value in values:
+            f.write(f"{value}\n")
+
+
+async def send_broadcast_message(message: types.Message):
+    await write_unique_id()
+    # Получаем список всех пользователей
+    with open('users_distr.log', 'r') as f:
+        users = f.readlines()
+
+    for user in users:
+        # Отправляем сообщение каждому пользователю
+        await bot.send_message(user, message.text)
+
+
 # Обработчик инлайн-кнопок админ-панели
 @dp.callback_query_handler(state=AdminState.menu)
 async def process_callback_admin(callback_query: types.CallbackQuery, state: FSMContext):
@@ -289,27 +347,32 @@ async def process_callback_admin(callback_query: types.CallbackQuery, state: FSM
         with open('bot.log', 'rb') as file:
             # отправляем файл ботом
             await bot.send_document(callback_query.from_user.id, file)
-            file.close()
-        # удаляем все данные из файла
-        with open("bot.log", "w") as file:
-            file.write("")
-            file.close()
+        await clear_bot_log()
+    elif data == "admin_distribution":
+        await bot.answer_callback_query(callback_query.id)
+        await bot.send_message(callback_query.from_user.id, "Введите текст рассылки:")
+        await AdminState.broadcast_text.set()
     elif data == "admin_chat_upload":
         with open('chat.log', 'rb') as file:
             # отправляем файл ботом
             await bot.send_document(callback_query.from_user.id, file)
-            file.close()
-        # удаляем все данные из файла
-        with open("chat.log", "w") as file:
-            file.write("")
-            file.close()
+        await clear_chat_log()
     elif data == "admin_user_upload":
-        with open('users.log', 'rb') as file:
+        await write_unique_id()
+        with open('users_distr.log', 'rb') as file:
             # отправляем файл ботом
             await bot.send_document(callback_query.from_user.id, file)
     elif data == "admin_exit":
         await bot.answer_callback_query(callback_query.id, text="Вы вышли из админ-панели.")
         await state.finish()
+
+
+@dp.message_handler(state=AdminState.broadcast_text)
+async def process_admin_broadcast_text(message: types.Message, state: FSMContext):
+    # Отправляем сообщение всем пользователям бота
+    await send_broadcast_message(message)
+    # Завершаем состояние
+    await AdminState.menu.set()
 
 
 @dp.message_handler(lambda message: message.text.upper() not in groups1)
