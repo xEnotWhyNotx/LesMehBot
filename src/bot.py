@@ -303,16 +303,10 @@ async def extract_value(string):
 
 
 async def write_unique_id():
-    with open('bot.log', 'r') as f:
-        log_data = f.readlines()
     with open('users.log', 'r') as ff:
         users_data = ff.readlines()
 
     values = set()
-    for line in log_data:
-        value = await extract_value(line)
-        if value:
-            values.add(value)
     for line in users_data:
         value = await extract_value(line)
         if value:
