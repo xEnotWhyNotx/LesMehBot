@@ -3,6 +3,8 @@ import openpyxl as ox
 import numpy as np
 import time
 import json
+import datetime
+from datetime import datetime, date, timedelta
 
 
 def Reader_files():
@@ -31,11 +33,12 @@ def Reader_files():
         for filename in xlsx_files:
             if filename.endswith('.xlsx') and (str(filename)[:-4] + "txt") == file:
 
+                current_year = str(datetime.now().year)
                 date_str = []
                 date_start = file.find(" на ") + 4
                 date_end = file.find(".2023")
                 date_str.append(file[date_start:date_end])
-                date_str = str(date_str).replace('[', '').replace(']', '').replace("'", "")
+                date_str = str(date_str).replace('[', '').replace(']', '').replace("'", "")[:-2] + current_year
                 all_data_collect[str(date_str)] = {}
 
                 start = time.time()

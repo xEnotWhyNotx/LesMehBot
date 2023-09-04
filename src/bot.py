@@ -126,13 +126,14 @@ async def split_groups(group):
 async def search_date(group, subgroup):
     try:
         today = date.today()
+        current_year = str(datetime.now().year)
         with open('all_data.json') as f:
             data_json = json.load(f)
         dates = set()
         for day in data_json:
             day_info = data_json[day]
             date_clear = str(day).replace('[', '').replace(']', '').replace("'", "")
-            date_for = date_clear + '.2023'
+            date_for = date_clear
             for collect in day_info:
                 if collect == group and subgroup == '1':
                     file_date = datetime.strptime(date_for, '%d.%m.%Y').date()
@@ -408,12 +409,10 @@ async def process_group_name(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(lambda c: True, state=UserState.WAITING_SUBGROUP)
 async def process_subgroup(callback_query: types.CallbackQuery, state: FSMContext):
     subgroup = callback_query.data
-
     data = await state.get_data()
     group_name = data.get("group_name")
 
     keyboard = InlineKeyboardMarkup(row_width=2)
-
     DATES = await search_date(group_name, subgroup)
     print(DATES)
     for date in DATES:
