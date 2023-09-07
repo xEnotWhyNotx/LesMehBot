@@ -409,8 +409,10 @@ async def process_group_name(message: types.Message, state: FSMContext):
 @dp.callback_query_handler(lambda c: True, state=UserState.WAITING_SUBGROUP)
 async def process_subgroup(callback_query: types.CallbackQuery, state: FSMContext):
     subgroup = callback_query.data
+    print(subgroup)
     data = await state.get_data()
     group_name = data.get("group_name")
+    print(group_name, subgroup)
 
     keyboard = InlineKeyboardMarkup(row_width=2)
     DATES = await search_date(group_name, subgroup)

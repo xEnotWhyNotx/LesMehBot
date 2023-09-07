@@ -4,7 +4,37 @@ import numpy as np
 import time
 import json
 import datetime
+import re
 from datetime import datetime, date, timedelta
+
+def Delete_old_files():
+    data_dir = 'Admin/Downloads'
+    file_list = os.listdir(data_dir)
+    date_pattern = r'\d{2}\.\d{2}'
+    date_list = []
+    for filename in file_list:
+        # Проверяем, соответствует ли имя файла формату с датой
+        date_match = re.search(date_pattern, filename)
+
+        if date_match:
+            # Извлекаем дату из имени файла
+            date_str = date_match.group(0)
+            # Проверяем, есть ли слово "НОВОЕ" в имени файла
+            if ("НОВОЕ" or "новое") in filename:
+                # Если есть, удаляем все старые файлы с этой датой
+                for old_file in file_list:
+                    if date_str in old_file and ("НОВОЕ" or "новое") not in old_file:
+                        try:
+                            print(old_file, "deleted")
+                            os.remove(os.path.join(data_dir, old_file))
+                        except Exception:
+                            continue
+        # print(date_list)
+            # else:
+            #     # Если слова "НОВОЕ" нет, удаляем все файлы с этой датой, кроме текущего
+            #     for old_file in file_list:
+            #         if date_str in old_file and filename != old_file:
+            #             os.remove(os.path.join(data_dir, old_file))
 
 
 def Reader_files():
@@ -16,7 +46,6 @@ def Reader_files():
     alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     dest_dir = 'Admin/Destination'
     fds = sorted(os.listdir('Admin/Destination/'))
-
     for file in fds:
         if file.endswith('.txt'):
             os.remove(dest_dir + '/' + file)
@@ -38,7 +67,16 @@ def Reader_files():
                 date_start = file.find(" на ") + 4
                 date_end = file.find(".2023")
                 date_str.append(file[date_start:date_end])
-                date_str = str(date_str).replace('[', '').replace(']', '').replace("'", "")[:-2] + current_year
+
+                date_pattern = r'\d{2}\.\d{2}'
+                date_match = re.search(date_pattern, file)
+                if date_match:
+                    # Извлекаем дату из имени файла
+                    date_str = str(date_match.group(0)) + "." + current_year
+                # if "НОВОЕ" or "новое" in str(filename):
+                #     date_str = str(date_str).replace('[', '').replace(']', '').replace("'", "")[:-2] + current_year
+                # else:
+                #     date_str = str(date_str).replace('[', '').replace(']', '').replace("'", "")[:-2] + current_year
                 all_data_collect[str(date_str)] = {}
 
                 start = time.time()

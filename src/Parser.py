@@ -2,7 +2,7 @@ import time
 from Download_xls import Download_xls, delete_downloaded_files
 from Reformat_delete import Reformat_and_delete, add_new_to_file_name, delete_files
 from Search_groups import Search_groups
-from Reader import Reader_files
+from Reader import Reader_files, Delete_old_files
 
 
 def parser():
@@ -10,6 +10,7 @@ def parser():
         start_all_parse = time.time()
         Download_xls()
         delete_downloaded_files()
+        Delete_old_files()
         Reformat_and_delete()
         Search_groups()
         Reader_files()
