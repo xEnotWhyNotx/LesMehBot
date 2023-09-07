@@ -39,7 +39,6 @@ def find_files_by_subgroup(group_name, subgroup):
     files = glob.glob(directory + pattern)
     return files
 
-
 def find_date_from_name_file(group_name, subgroup):
     files = get_filtered_files(group_name, subgroup)
     date_str = []
@@ -48,7 +47,6 @@ def find_date_from_name_file(group_name, subgroup):
         date_end = file.find(".2023")
         date_str.append(file[date_start:date_end])
     return date_str
-
 
 def reading(group_name, subgroup, date):
     files = get_filtered_files(group_name, subgroup)
@@ -85,5 +83,3 @@ def reading(group_name, subgroup, date):
                     output += f"   Аудитория: {class_name}\n"
 
             return output
-#
-# print(reading("ОЛ-11", "1", "09.03"))

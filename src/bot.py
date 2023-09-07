@@ -167,17 +167,18 @@ async def reading_json(group_name, subgroup, date_search):
     teachers = data_json[key_day][key_group][key_subgroup]['teacher']
     auds = data_json[key_day][key_group][key_subgroup]['aud']
 
-    output = f"Расписание группы {group_name}\n"
+    time_lesson = ["8:30-9:50", "10:10-11:40", "12:10-13:40", "13:50-15:20", "15:30-17:00", "17:10-18:40"]
+    output = f"Расписание группы {group_name} на {date_search}\n\n"
     for i in range(len(lessons)):
         sub_name = lessons[i]
         tech_name = teachers[i]
         class_name = auds[i]
         if sub_name != 'None':
-            output += f"{i + 1}. {sub_name}\n"
+            output += f"⏰Пара № {i + 1}. {time_lesson[i]}\n📝{sub_name}\n"
         if tech_name != 'None':
-            output += f"    {tech_name}\n"
+            output += f"‍👩‍🏫Преподаватель: {tech_name}\n"
         if class_name != 'None':
-            output += f"    Аудитория: {class_name}\n"
+            output += f"🏫Аудитория: {class_name}\n\n"
     return output
 
 
@@ -328,7 +329,8 @@ async def send_broadcast_message(message: types.Message):
         try:
             await bot.send_message(user, message.text)
         except Exception:
-            bot_logger.info(f"Ошибка отправки сообщения пользователю {user}: бот не может начать диалог с пользователем")
+            bot_logger.info(
+                f"Ошибка отправки сообщения пользователю {user}: бот не может начать диалог с пользователем")
             continue
 
 
